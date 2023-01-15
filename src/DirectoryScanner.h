@@ -25,7 +25,7 @@ public:
     void setScanLevel(std::size_t scanLevel);
     void setMinFileSize(FileSize minFileSize);
     void setBlockSize(FileSize blockSize);
-    void setFilenameMatcher(std::shared_ptr<StringMatcher>& filenameMatcher);
+    void setFilenameMatcher(const std::shared_ptr<StringMatcher>& filenameMatcher);
     void setHasher(const Hasher& hasher);
 private:
     std::vector<std::string> directoriesToScan;

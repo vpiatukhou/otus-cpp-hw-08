@@ -76,7 +76,7 @@ void DirectoryScanner::setBlockSize(FileSize blockSize) {
     this->blockSize = blockSize;
 }
 
-void DirectoryScanner::setFilenameMatcher(std::shared_ptr<StringMatcher>& filenameMatcher) {
+void DirectoryScanner::setFilenameMatcher(const std::shared_ptr<StringMatcher>& filenameMatcher) {
     this->filenameMatcher = filenameMatcher;
 }
 
