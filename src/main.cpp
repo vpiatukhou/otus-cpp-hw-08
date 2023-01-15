@@ -1,7 +1,7 @@
 #include "DirectoryScanner.h"
 #include "FileComparer.h"
 #include "HasherFactory.h"
-#include "Util.h"
+#include "ConversionUtil.h"
 
 #include <cstddef>
 #include <iostream>
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
         DirectoryScanner scanner;
         scanner.setDirectoriesToScan(dirsToScan);
         scanner.setDirectoriesToExclude(dirsToExclude);
-        scanner.setFileMasks(fileMasks);
+        scanner.setFilenameMatcher(std::make_shared<StringMatcher>(fileMasks));
         scanner.setScanLevel(scanLevel);
 
         try {

@@ -10,7 +10,8 @@ add_library(bayan
     FileComparer.cpp
     FileImpl.cpp 
     HasherFactory.cpp
-    Util.cpp)
+    StringMatcher.cpp
+    ConversionUtil.cpp)
 
 #rename the executable to "bayan"
 set_target_properties(bayan_cli PROPERTIES OUTPUT_NAME bayan)
