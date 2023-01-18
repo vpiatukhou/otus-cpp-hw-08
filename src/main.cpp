@@ -54,18 +54,13 @@ int main(int argc, char** argv) {
     po::options_description optionsDescription("Options");
     optionsDescription.add_options()
         ("help,h", "Print help information.")
-        ("include-path,i", dirsToScanOption, "Paths to be scanned. If not specified, the scan starts in the current directory.")
-        ("exclude-path,e", dirsToExcludeOption, "Paths which must not be scanned.")
-        ("level,l", scanLevelOption, "A scan level. 0 - only the current directory will be scanned. 1 - the current directory and its subdirectories and so on.")
-        ("min-file-size,s", minFileSizeOption, "A minimum file size. Files which are smaller than the specified size will be skipped.\n"
-            "Examples:\n"
-            "1 - one byte\n"
-            "1k - one kilobyte\n"
-            "1m - one megabyte\n"
-            "1g - one gigabyte\n")
-        ("file-name,n", fileMaskOption, "File name masks. A file is scanned only if its name matches to one of the specified masks.")
-        ("block-size,S", blockSizeOption, "A number of bytes which are read per one I/O operation.")
-        ("hash-algorithm,H", hashAlgorithmOption, "A hash algorithm. Supported values are: crc32 and md5.");
+        ("include-path,i", dirsToScanOption, "One or more paths to be scanned. If not specified, the scan starts in the current directory.\n\nExample:\n-i /absolute/path .. /relative/path\n")
+        ("exclude-path,e", dirsToExcludeOption, "One or more paths which must not be scanned.\n\nExample:\n\n-e /absolute/path ../relative/path\n")
+        ("level,l", scanLevelOption, "A subdirectory level. E.g. 0 (the default value) means that only the current directory is scanned. 1 - the current directory and its subdirectories. And so on.\n")
+        ("min-file-size,s", minFileSizeOption, "A minimum file size. Files which are smaller than the specified size will be skipped. The default value is 2.\n\nExamples:\n\n1 - one byte\n1k - one kibibyte\n1m - one megibyte\n1g - one gibibyte.\n")
+        ("file-name,n", fileMaskOption, "File name pattern.\n\nSpecial characters:\n\n*    Any zero or more characters.\n?    Any one character.\n\\    Removes special meaning of '?'.E.g.: \\ ? means 'a question mark' (not a wildcard).\n")
+        ("block-size,S", blockSizeOption, "A number of bytes which are read per one I/O operation. The default value is 8.\n")
+        ("hash-algorithm,H", hashAlgorithmOption, "A hash algorithm. Supported values are: crc32 (default) and md5.\n");
     
     po::variables_map optionValues;
     po::store(po::parse_command_line(argc, argv, optionsDescription), optionValues);

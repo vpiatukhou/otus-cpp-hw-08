@@ -18,6 +18,8 @@ INSTANTIATE_TEST_SUITE_P(StringMatcherTest, StringMatcherPositiveTest, testing::
     MaskAndStrValues("abc", "abc"),
     MaskAndStrValues("aaa*c*", "aaabbbcccddd"),
     MaskAndStrValues("?b?d?", "abcde"),
+    MaskAndStrValues("\\?b\\?d\\?", "?b?d?"),
+    MaskAndStrValues("\\??c*", "?bcde"),
     MaskAndStrValues("a\\dc", "a\\dc"),
     MaskAndStrValues("a.c", "a.c"),
     MaskAndStrValues("a[b]c", "a[b]c"),

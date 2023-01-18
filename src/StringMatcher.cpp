@@ -2,9 +2,12 @@
 
 namespace Homework {
 
-const std::regex SPECIAL_SYMBOL_REGEX("\\\\|\\.|\\[|\\]|\\{|\\}|\\(|\\)|\\+|\\^|\\$|\\|"); // one of the following characters: \.[]{}()+^$|
+// any of the following characters: \.[]{}()+^$|
+// '/' is ignored if it is followed by '?'
+const std::regex SPECIAL_SYMBOL_REGEX("(\\\\[^?])|\\.|\\[|\\]|\\{|\\}|\\(|\\)|\\+|\\^|\\$|\\|");
 const std::regex ANY_CHAR_SEQ_WILDCARD("[*]");
-const std::regex ANY_CHAR_WILDCARD("[^/]?([?])");
+const std::regex ANY_CHAR_WILDCARD("([^\\\\]|^)([?])");
+const std::size_t ANY_CHAR_WILDCARD_GROUP_INDEX = 2;
 const std::string ESCAPED_SYMBOL = "\\$&";
 const std::string ANY_CHAR_SEQ_REGEXP = ".*";
 const char ANY_CHAR_REGEXP = '.';
@@ -32,7 +35,7 @@ void StringMatcher::replaceAnCharWildcard(std::string& mask) const {
     auto begin = std::sregex_iterator(mask.cbegin(), mask.cend(), ANY_CHAR_WILDCARD);
     auto end = std::sregex_iterator();
     for (auto it = begin; it != end; ++it) {
-        auto wildcardPosition = (*it).position(1);
+        auto wildcardPosition = (*it).position(ANY_CHAR_WILDCARD_GROUP_INDEX);
         mask[wildcardPosition] = ANY_CHAR_REGEXP;
     }
 }
