@@ -11,33 +11,49 @@ namespace fs = boost::filesystem;
 
 const std::size_t DirectoryScanner::DEFAULT_SCAN_LEVEL = 0;
 const FileSize DirectoryScanner::DEFAULT_MIN_FILE_SIZE_BYTE = 2;
-const std::size_t DirectoryScanner::DEFAULT_BLOCK_SIZE_BYTE = 8;
+const std::size_t DirectoryScanner::DEFAULT_BLOCK_SIZE_BYTE = 1024;
 
 std::vector<std::unique_ptr<File>> DirectoryScanner::getFilesFromDirectories() const {
     assert(filenameMatcher != nullptr);
 
+    std::unordered_set<std::string> scannedDirectories;
+
     std::vector<std::unique_ptr<File>> target;
-    for (auto& directory : directoriesToScan) {
-        if (fs::is_directory(directory)) { //skip an invalid path
-            collectFiles(directory, 0, target);
+    if (directoriesToScan.empty()) {
+        //if no directories are specified, scan the current directory
+        collectFiles(fs::current_path(), 0, target, scannedDirectories);
+    } else {
+        for (auto& directory : directoriesToScan) {
+            if (fs::is_directory(directory)) { //skip an invalid path
+                collectFiles(directory, 0, target, scannedDirectories);
+            }
         }
     }
     return target;
 }
 
-void DirectoryScanner::collectFiles(const boost::filesystem::path& rootDirectory, std::size_t currentScanLevel, std::vector<std::unique_ptr<File>>& target) const {
-    if (isDirectoryExcluded(rootDirectory)) {
+void DirectoryScanner::collectFiles(const boost::filesystem::path& rootDirectory, std::size_t currentScanLevel,
+    std::vector<std::unique_ptr<File>>& target, std::unordered_set<std::string>& scannedDirectories) const {
+
+    auto rootCanonicalPath = fs::canonical(rootDirectory);
+
+    //we need to test for scanned directories because directoriesToScan may contain a directory AND its subdirectories
+    if (scannedDirectories.count(rootCanonicalPath.string()) || isDirectoryExcluded(rootCanonicalPath)) {
         return;
     }
 
-    for (auto& entry : fs::directory_iterator(rootDirectory)) {
+    scannedDirectories.insert(rootCanonicalPath.string());
+
+    for (auto& entry : fs::directory_iterator(rootCanonicalPath)) {
         auto& path = entry.path();
+
         if (fs::is_directory(path) && currentScanLevel < scanLevel) {
-            collectFiles(path, currentScanLevel + 1, target);
+            collectFiles(path, currentScanLevel + 1, target, scannedDirectories);
         } else if (fs::is_regular_file(path) && filenameMatcher->matches(path.filename().string())) {
             auto fileSize = fs::file_size(path);
             if (fileSize >= minFileSize) {
-                target.push_back(std::make_unique<FileImpl>(path.string(), blockSize, fileSize, hasher));
+                auto canonicalPath = fs::canonical(path).string();
+                target.push_back(std::make_unique<FileImpl>(canonicalPath, blockSize, fileSize, hasher));
             }
         }
     }

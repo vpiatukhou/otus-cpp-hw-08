@@ -41,7 +41,6 @@ void findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<
             while (next != source.end()) {
                 mustRemoveLastElement = false;
 
-                auto& currentFilepath = (*current)->getFilepath();
                 if (**current == **next) {
                     ++next;
                     ++current;

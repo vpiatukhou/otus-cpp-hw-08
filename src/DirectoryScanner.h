@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <unordered_set>
 
 namespace Homework {
 
@@ -36,7 +37,8 @@ private:
     std::shared_ptr<StringMatcher> filenameMatcher;
     Hasher hasher;
 
-    void collectFiles(const boost::filesystem::path& rootDirectory, std::size_t currentScanLevel, std::vector<std::unique_ptr<File>>& target) const;
+    void collectFiles(const boost::filesystem::path& rootDirectory, std::size_t currentScanLevel, std::vector<std::unique_ptr<File>>& target, 
+        std::unordered_set<std::string>& scannedDirectories) const;
     bool isDirectoryExcluded(const boost::filesystem::path& directory) const;
 };
 

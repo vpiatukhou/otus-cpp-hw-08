@@ -37,5 +37,12 @@ Bayan is a command-line utility for finding duplicate files.
 
 --block-size,-S     A number of bytes which are read per one I/O operation. The default value is 8.
 
+                    Examples:
+
+                    1 - one byte
+                    1k - one kibibyte
+                    1m - one megibyte
+                    1g - one gibibyte
+
 --hash-algorithm,-H A hash algorithm. Supported values are: crc32 (default) and md5.
 ```

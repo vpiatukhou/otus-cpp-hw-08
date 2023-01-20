@@ -12,23 +12,23 @@
 #include <boost/program_options.hpp>
 
 using namespace Homework;
-
+using string = std::string;
 namespace po = boost::program_options;
 
-const std::string HELP_PARAM = "help";
+const string HELP_PARAM = "help";
 
-const std::string UNEXPECTED_ERROR_MSG = "Unexpected error occurred: ";
+const string UNEXPECTED_ERROR_MSG = "Unexpected error occurred: ";
 const int UNEXPECTED_ERROR_CODE = -1;
 const int INVALID_INPUT_ERROR_CODE = -2;
 
-void sortFilepaths(std::list<std::list<std::string>>& groupedFilepaths) {
+void sortFilepaths(std::list<std::list<string>>& groupedFilepaths) {
     for (auto& duplicateFiles : groupedFilepaths) {
         duplicateFiles.sort();
     }
     groupedFilepaths.sort();
 }
 
-void printFilepaths(const std::list<std::list<std::string>>& groupedFilepaths) {
+void printFilepaths(const std::list<std::list<string>>& groupedFilepaths) {
     for (auto& duplicateFiles : groupedFilepaths) {
         for (auto& filepath : duplicateFiles) {
             std::cout << filepath << std::endl;
@@ -38,18 +38,16 @@ void printFilepaths(const std::list<std::list<std::string>>& groupedFilepaths) {
 }
 
 int main(int argc, char** argv) {
-    std::vector<std::string> dirsToScan, dirsToExclude, fileMasks;
-    size_t scanLevel;
-    FileSize blockSize;
-    std::string minFileSize, hashAlgorithm;
+    std::vector<string> dirsToScan, dirsToExclude, fileMasks;
+    string scanLevel, minFileSize, blockSize, hashAlgorithm;
 
-    auto dirsToScanOption = po::value<std::vector<std::string>>(&dirsToScan)->multitoken();
-    auto dirsToExcludeOption = po::value<std::vector<std::string>>(&dirsToExclude)->multitoken();
-    auto scanLevelOption = po::value<std::size_t>(&scanLevel)->default_value(DirectoryScanner::DEFAULT_SCAN_LEVEL);
-    auto minFileSizeOption = po::value<std::string>(&minFileSize)->default_value(std::to_string(DirectoryScanner::DEFAULT_MIN_FILE_SIZE_BYTE));
-    auto fileMaskOption = po::value<std::vector<std::string>>(&fileMasks)->multitoken();
-    auto blockSizeOption = po::value<FileSize>(&blockSize)->default_value(DirectoryScanner::DEFAULT_BLOCK_SIZE_BYTE);
-    auto hashAlgorithmOption = po::value<std::string>(&hashAlgorithm)->default_value(CRC32);
+    auto dirsToScanOption = po::value<std::vector<string>>(&dirsToScan)->multitoken();
+    auto dirsToExcludeOption = po::value<std::vector<string>>(&dirsToExclude)->multitoken();
+    auto scanLevelOption = po::value<string>(&scanLevel)->default_value(std::to_string(DirectoryScanner::DEFAULT_SCAN_LEVEL));
+    auto minFileSizeOption = po::value<string>(&minFileSize)->default_value(std::to_string(DirectoryScanner::DEFAULT_MIN_FILE_SIZE_BYTE));
+    auto fileMaskOption = po::value<std::vector<string>>(&fileMasks)->multitoken();
+    auto blockSizeOption = po::value<string>(&blockSize)->default_value(std::to_string(DirectoryScanner::DEFAULT_BLOCK_SIZE_BYTE));
+    auto hashAlgorithmOption = po::value<string>(&hashAlgorithm)->default_value(CRC32);
 
     po::options_description optionsDescription("Options");
     optionsDescription.add_options()
@@ -59,7 +57,7 @@ int main(int argc, char** argv) {
         ("level,l", scanLevelOption, "A subdirectory level. E.g. 0 (the default value) means that only the current directory is scanned. 1 - the current directory and its subdirectories. And so on.\n")
         ("min-file-size,s", minFileSizeOption, "A minimum file size. Files which are smaller than the specified size will be skipped. The default value is 2.\n\nExamples:\n\n1 - one byte\n1k - one kibibyte\n1m - one megibyte\n1g - one gibibyte.\n")
         ("file-name,n", fileMaskOption, "File name pattern.\n\nSpecial characters:\n\n*    Any zero or more characters.\n?    Any one character.\n\\    Removes special meaning of '?'.E.g.: \\ ? means 'a question mark' (not a wildcard).\n")
-        ("block-size,S", blockSizeOption, "A number of bytes which are read per one I/O operation. The default value is 8.\n")
+        ("block-size,b", blockSizeOption, "A number of bytes which are read per one I/O operation. The default value is 1024.\n\nExamples:\n\n1 - one byte\n1k - one kibibyte\n1m - one megibyte\n1g - one gibibyte.\n")
         ("hash-algorithm,H", hashAlgorithmOption, "A hash algorithm. Supported values are: crc32 (default) and md5.\n");
     
     po::variables_map optionValues;
@@ -73,15 +71,27 @@ int main(int argc, char** argv) {
         scanner.setDirectoriesToScan(dirsToScan);
         scanner.setDirectoriesToExclude(dirsToExclude);
         scanner.setFilenameMatcher(std::make_shared<StringMatcher>(fileMasks));
-        scanner.setScanLevel(scanLevel);
+        
+        try {
+            scanner.setScanLevel(stringToSize(scanLevel));
+        } catch (std::invalid_argument& e) {
+            std::cout << "The scan level is invalid: " << e.what() << std::endl;
+            return INVALID_INPUT_ERROR_CODE;
+        }
 
         try {
             scanner.setMinFileSize(fileSizeToBytes(minFileSize));
         } catch (std::invalid_argument& e) {
-            std::cout << "An invalid value was specified for min-file-size: " << e.what() << std::endl;
+            std::cout << "The minimum file size is invalid: " << e.what() << std::endl;
             return INVALID_INPUT_ERROR_CODE;
         }
-        scanner.setBlockSize(blockSize);
+
+        try {
+            scanner.setBlockSize(fileSizeToBytes(blockSize));
+        } catch (std::invalid_argument& e) {
+            std::cout << "The block size is invalid: " << e.what() << std::endl;
+            return INVALID_INPUT_ERROR_CODE;
+        }
 
         try {
             auto hasher = getHasher(hashAlgorithm);

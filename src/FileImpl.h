@@ -20,7 +20,7 @@ namespace Homework {
 
     private:
         std::string filepath;
-        FileSize blockSize;
+        FileSize blockSize = 0;
         std::size_t offset = 0;
         FileSize fileSize = 0;
         Hash blockHash;
