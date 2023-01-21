@@ -37,9 +37,8 @@ private:
     std::shared_ptr<StringMatcher> filenameMatcher;
     Hasher hasher;
 
-    void collectFiles(const boost::filesystem::path& rootDirectory, std::size_t currentScanLevel, std::vector<std::unique_ptr<File>>& target) const;
+    void collectFiles(const boost::filesystem::path& rootDirectory, std::vector<std::unique_ptr<File>>& target) const;
     bool isDirectoryExcluded(const boost::filesystem::path& directory) const;
-    bool isFileCollected(const std::vector<std::unique_ptr<File>>& target, const boost::filesystem::path& filepath) const;
 };
 
 };

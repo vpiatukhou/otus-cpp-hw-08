@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <string>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
 using namespace Homework;
