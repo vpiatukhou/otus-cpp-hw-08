@@ -16,40 +16,33 @@ const std::size_t DirectoryScanner::DEFAULT_BLOCK_SIZE_BYTE = 1024;
 std::vector<std::unique_ptr<File>> DirectoryScanner::getFilesFromDirectories() const {
     assert(filenameMatcher != nullptr);
 
-    std::unordered_set<std::string> scannedDirectories;
-
     std::vector<std::unique_ptr<File>> target;
     if (directoriesToScan.empty()) {
         //if no directories are specified, scan the current directory
-        collectFiles(fs::current_path(), 0, target, scannedDirectories);
+        collectFiles(fs::current_path(), 0, target);
     } else {
         for (auto& directory : directoriesToScan) {
             if (fs::is_directory(directory)) { //skip an invalid path
-                collectFiles(directory, 0, target, scannedDirectories);
+                collectFiles(directory, 0, target);
             }
         }
     }
     return target;
 }
 
-void DirectoryScanner::collectFiles(const boost::filesystem::path& rootDirectory, std::size_t currentScanLevel,
-    std::vector<std::unique_ptr<File>>& target, std::unordered_set<std::string>& scannedDirectories) const {
-
-    auto rootCanonicalPath = fs::canonical(rootDirectory);
-
-    //we need to test for scanned directories because directoriesToScan may contain a directory AND its subdirectories
-    if (scannedDirectories.count(rootCanonicalPath.string()) || isDirectoryExcluded(rootCanonicalPath)) {
+void DirectoryScanner::collectFiles(const boost::filesystem::path& rootDirectory, std::size_t currentScanLevel, std::vector<std::unique_ptr<File>>& target) const {
+    if (isDirectoryExcluded(rootDirectory)) {
         return;
     }
 
-    scannedDirectories.insert(rootCanonicalPath.string());
-
-    for (auto& entry : fs::directory_iterator(rootCanonicalPath)) {
+    for (auto& entry : fs::directory_iterator(rootDirectory)) {
         auto& path = entry.path();
 
         if (fs::is_directory(path) && currentScanLevel < scanLevel) {
-            collectFiles(path, currentScanLevel + 1, target, scannedDirectories);
-        } else if (fs::is_regular_file(path) && filenameMatcher->matches(path.filename().string())) {
+            collectFiles(path, currentScanLevel + 1, target);
+        } else if (fs::is_regular_file(path) && filenameMatcher->matches(path.filename().string()) 
+            && !isFileCollected(target, path)) { //a file can be visited twice if directoriesToScan contains a directory AND its subdirectories
+
             auto fileSize = fs::file_size(path);
             if (fileSize >= minFileSize) {
                 auto canonicalPath = fs::canonical(path).string();
@@ -62,6 +55,15 @@ void DirectoryScanner::collectFiles(const boost::filesystem::path& rootDirectory
 bool DirectoryScanner::isDirectoryExcluded(const boost::filesystem::path& directory) const {
     for (auto& directoryToCompare : directoriesToExclude) {
         if (fs::equivalent(directoryToCompare, directory)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DirectoryScanner::isFileCollected(const std::vector<std::unique_ptr<File>>& target, const boost::filesystem::path& filepath) const {
+    for (auto& file : target) {
+        if (fs::equivalent(file->getFilepath(), filepath)) {
             return true;
         }
     }
