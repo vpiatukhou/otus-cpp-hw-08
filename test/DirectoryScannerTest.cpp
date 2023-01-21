@@ -3,7 +3,6 @@
 
 #include "gmock/gmock.h"
 
-#include <algorithm>
 #include <vector>
 
 using namespace Homework;
@@ -46,10 +45,6 @@ DirectoryScanner createDirectoryScanner() {
 }
 
 void verifyFiles(const std::vector<std::string>& expectedFiles, std::vector<std::unique_ptr<File>>& files) {
-    std::sort(files.begin(), files.end(), [](const std::unique_ptr<File>& a, const std::unique_ptr<File>& b) {
-        return a->getFilepath() < b->getFilepath(); 
-    });
-
     ASSERT_EQ(expectedFiles.size(), files.size());
 
     for (std::size_t i = 0; i < expectedFiles.size(); ++i) {
