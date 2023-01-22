@@ -7,8 +7,7 @@
 
 namespace Homework {
 
-    class FileImpl : public File
-    {
+    class FileImpl : public File {
     public:
         FileImpl(const std::string& filepath, FileSize blockSize, FileSize fileSize, const Hasher& hasher);
 

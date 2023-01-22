@@ -5,13 +5,14 @@ find_package(Boost REQUIRED COMPONENTS system filesystem program_options)
 add_executable(bayan_cli main.cpp)
 
 add_library(bayan
+    ConversionUtil.cpp
     DirectoryScanner.cpp
     File.cpp
     FileComparer.cpp
     FileImpl.cpp 
     HasherFactory.cpp
-    StringMatcher.cpp
-    ConversionUtil.cpp)
+    ProgramOptions.cpp
+    StringMatcher.cpp)
 
 #rename the executable to "bayan"
 set_target_properties(bayan_cli PROPERTIES OUTPUT_NAME bayan)

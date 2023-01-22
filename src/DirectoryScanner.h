@@ -5,9 +5,9 @@
 
 #include <boost/filesystem.hpp>
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 #include <unordered_set>
 
 namespace Homework {
