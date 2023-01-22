@@ -27,18 +27,9 @@ public:
     MOCK_METHOD(bool, matches, (const std::string& str), (const override));
 };
 
-/**
- * A fake hash function. It is used only to set up DirectoryScanner. The result of the function doesn't matter.
- */
-Hash getHash(const std::vector<char>&) {
-    Hash hash;
-    return hash;
-}
-
 DirectoryScanner createDirectoryScanner() {
     DirectoryScanner scanner;
     scanner.setFilenameMatcher(std::make_shared<StringMatcher>(std::vector<std::string>()));
-    scanner.setHasher(getHash);
     scanner.setScanLevel(DEEP_SCAN_LEVEL);
     scanner.setMinFileSize(0);
     return scanner;
@@ -114,7 +105,6 @@ TEST(DirectoryScannerTest, getFilesFromDirectoriesFileMask) {
 
     DirectoryScanner scanner;
     scanner.setFilenameMatcher(static_cast<std::shared_ptr<StringMatcher>>(filenameMatcher));
-    scanner.setHasher(getHash);
 
     std::vector<std::string> dirsToScan = { FILE_MASK_TEST_DIR };
     scanner.setDirectoriesToScan(dirsToScan);

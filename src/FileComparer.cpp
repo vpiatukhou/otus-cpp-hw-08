@@ -14,7 +14,10 @@ auto FILE_BLOCK_COMPARATOR = [](const std::unique_ptr<File>& a, const std::uniqu
     return *a < *b;
 };
 
-void findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<std::list<std::string>>& target) {
+FileComparer::FileComparer(FileSize blockSize_, const Hasher& hasher_) : blockSize(blockSize), hasher(hasher_) {
+}
+
+void FileComparer::findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<std::list<std::string>>& target) const {
     std::deque<std::list<std::unique_ptr<File>>> unprocessedGroups;
     unprocessedGroups.push_back(std::move(files));
 
@@ -26,7 +29,8 @@ void findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<
         bool hasNextBlock = true;
         while (hasNextBlock) {
             for (auto& file : source) {
-                hasNextBlock = file->readNextBlock(); //we use '=' instead of '&=' because it is guaranteed that all files have the same size
+                //we use 'hasNextBlock =' instead of 'hasNextBlock &=' because all files have the same size
+                hasNextBlock = file->readNextBlock(blockSize, hasher);
             }
 
             source.sort(FILE_BLOCK_COMPARATOR);
@@ -80,7 +84,7 @@ void findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<
     }
 }
 
-std::list<std::list<std::string>> findDuplicateFiles(std::vector<std::unique_ptr<File>>& target) {
+std::list<std::list<std::string>> FileComparer::findDuplicateFiles(std::vector<std::unique_ptr<File>>& target) const {
     //group files by sizes
     std::multimap<std::size_t, std::unique_ptr<File>> fileBySize;
     for (auto& file : target) {

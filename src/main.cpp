@@ -39,12 +39,13 @@ int main(int argc, char* argv[]) {
             scanner.setFilenameMatcher(std::make_shared<StringMatcher>(programOptions.getFileMasks()));
             scanner.setScanLevel(programOptions.getScanLevel());
             scanner.setMinFileSize(programOptions.getMinFileSize());
-            scanner.setBlockSize(programOptions.getBlockSize());
-            auto hasher = getHasher(programOptions.getHashAlgorithm());
-            scanner.setHasher(hasher);
+            auto hasher = createHasher(programOptions.getHashAlgorithm());
 
             auto files = scanner.getFilesFromDirectories();
-            auto groupedFilepaths = findDuplicateFiles(files);
+
+            FileComparer fileComparer(programOptions.getBlockSize(), hasher);
+            auto groupedFilepaths = fileComparer.findDuplicateFiles(files);
+
             sortFilepaths(groupedFilepaths);
             printFilepaths(groupedFilepaths);
         } catch (std::invalid_argument& e) {

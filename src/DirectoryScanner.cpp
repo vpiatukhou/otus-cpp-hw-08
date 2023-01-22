@@ -5,16 +5,10 @@
 
 #include <algorithm>
 #include <cassert>
-#include <limits>
-#include <stack>
 
 namespace Homework {
 
 namespace fs = boost::filesystem;
-
-const std::size_t DirectoryScanner::DEFAULT_SCAN_LEVEL = 0;
-const FileSize DirectoryScanner::DEFAULT_MIN_FILE_SIZE_BYTE = 2;
-const std::size_t DirectoryScanner::DEFAULT_BLOCK_SIZE_BYTE = 1024;
 
 std::vector<std::unique_ptr<File>> DirectoryScanner::getFilesFromDirectories() const {
     assert(filenameMatcher != nullptr);
@@ -59,7 +53,7 @@ void DirectoryScanner::collectFiles(const boost::filesystem::path& rootDirectory
                 //We don't test if the file is already added in order to avoid a linear search in 'target'.
                 //We cannot use std::unordered_set instead of std::vector because fs::path must be compared using fs::equivalent.
                 //So we just add the same file twice and remove the duplicate later.
-                target.push_back(std::make_unique<FileImpl>(canonicalPath, blockSize, fileSize, hasher));
+                target.push_back(std::make_unique<FileImpl>(canonicalPath, fileSize));
             }
         }
     }
@@ -94,16 +88,8 @@ void DirectoryScanner::setMinFileSize(FileSize minFileSize) {
     this->minFileSize = minFileSize;
 }
 
-void DirectoryScanner::setBlockSize(FileSize blockSize) {
-    this->blockSize = blockSize;
-}
-
 void DirectoryScanner::setFilenameMatcher(const std::shared_ptr<StringMatcher>& filenameMatcher) {
     this->filenameMatcher = filenameMatcher;
-}
-
-void DirectoryScanner::setHasher(const Hasher& hasher) {
-    this->hasher = hasher;
 }
 
 };

@@ -4,14 +4,19 @@
 
 #include <stdexcept>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
 namespace Homework {
 
-const std::string HELP_PARAM = "help";
-const std::size_t DEFAULT_SCAN_LEVEL = 0;
-const FileSize DEFAULT_MIN_FILE_SIZE_BYTE = 2;
-const std::size_t DEFAULT_BLOCK_SIZE_BYTE = 1024;
+const std::string ProgramOptions::HELP_PARAM = "help";
+
+const std::size_t ProgramOptions::DEFAULT_SCAN_LEVEL = 0;
+const FileSize ProgramOptions::DEFAULT_MIN_FILE_SIZE_BYTE = 2;
+const std::size_t ProgramOptions::DEFAULT_BLOCK_SIZE_BYTE = 1024;
+
+const std::string ProgramOptions::HASH_ALGORITHM_CRC32 = "crc32";
+const std::string ProgramOptions::HASH_ALGORITHM_MD5 = "md5";
 
 bool ProgramOptions::parse(int argc, char* argv[], std::ostream& out) {
     using namespace std::string_literals;
@@ -19,7 +24,7 @@ bool ProgramOptions::parse(int argc, char* argv[], std::ostream& out) {
 
     namespace po = boost::program_options;
 
-    string scanLevelStr, minFileSizeStr, blockSizeStr;
+    string scanLevelStr, minFileSizeStr, blockSizeStr, hashAlgorithmStr;
 
     auto dirsToScanOption = po::value<std::vector<string>>(&directoriesToScan)->multitoken();
     auto dirsToExcludeOption = po::value<std::vector<string>>(&directoriesToExclude)->multitoken();
@@ -27,7 +32,7 @@ bool ProgramOptions::parse(int argc, char* argv[], std::ostream& out) {
     auto minFileSizeOption = po::value<string>(&minFileSizeStr)->default_value(std::to_string(DEFAULT_MIN_FILE_SIZE_BYTE));
     auto fileMaskOption = po::value<std::vector<string>>(&fileMasks)->multitoken();
     auto blockSizeOption = po::value<string>(&blockSizeStr)->default_value(std::to_string(DEFAULT_BLOCK_SIZE_BYTE));
-    auto hashAlgorithmOption = po::value<string>(&hashAlgorithm)->default_value(CRC32);
+    auto hashAlgorithmOption = po::value<string>(&hashAlgorithmStr)->default_value(HASH_ALGORITHM_CRC32);
 
     po::options_description optionsDescription("Options");
     optionsDescription.add_options()
@@ -64,6 +69,15 @@ bool ProgramOptions::parse(int argc, char* argv[], std::ostream& out) {
     } catch (std::invalid_argument& e) {
         throw std::invalid_argument("The block size is invalid: "s + e.what());
     }
+
+    if (boost::iequals(hashAlgorithmStr, HASH_ALGORITHM_CRC32)) {
+        hashAlgorithm = HashAlgorithmType::CRC32;
+    } else if (boost::iequals(hashAlgorithmStr, HASH_ALGORITHM_MD5)) {
+        hashAlgorithm = HashAlgorithmType::MD5;
+    } else {
+        throw std::invalid_argument("Unsupported hash algorithm: "s + hashAlgorithmStr);
+    }
+
     return true;
 }
 
@@ -91,7 +105,7 @@ FileSize ProgramOptions::getBlockSize() const {
     return blockSize;
 }
 
-std::string ProgramOptions::getHashAlgorithm() const {
+HashAlgorithmType ProgramOptions::getHashAlgorithm() const {
     return hashAlgorithm;
 }
 

@@ -15,7 +15,7 @@ public:
     virtual ~File() {
     }
 
-    virtual bool readNextBlock() = 0;
+    virtual bool readNextBlock(FileSize blockSize, const Hasher& hasher) = 0;
 
     virtual std::string const& getFilepath() const = 0;
     virtual FileSize getFileSize() const = 0;

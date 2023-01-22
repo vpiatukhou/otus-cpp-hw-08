@@ -4,6 +4,8 @@
 
 using namespace Homework;
 
+const FileSize BLOCK_SIZE = 1024; // a fake block size. It is used only to set up FileComparer. The value doesn't impact on the tests.
+
 class TestFile : public File {
 private:
     std::string filepath;
@@ -17,7 +19,7 @@ public:
         currentBlockHash.resize(1);
     }
 
-    bool readNextBlock() override {
+    bool readNextBlock(FileSize blockSize, const Hasher& hasher) override {
         if (it != hashedBlocks.end()) {
             currentBlockHash[0] = *it;
             ++it;
@@ -38,12 +40,21 @@ public:
     }
 };
 
+/**
+ * A fake hash function. It is used only to set up FileComparer. The result of the function doesn't impact on the tests.
+ */
+Hash emptyHashFunc(const std::vector<char>&) {
+    Hash hash;
+    return hash;
+}
+
 TEST(FileComparerTest, findDuplicateFilesEmpty) {
     //given
     std::vector<std::unique_ptr<File>> files;
+    FileComparer fileComparer(BLOCK_SIZE, emptyHashFunc);
 
     //when
-    auto result = findDuplicateFiles(files);
+    auto result = fileComparer.findDuplicateFiles(files);
 
     //then
     ASSERT_TRUE(result.empty());
@@ -58,8 +69,10 @@ TEST(FileComparerTest, findDuplicateFilesSimplestCasePositive) {
 
     std::list<std::list<std::string>> expected = { {"f1", "f2"} };
 
+    FileComparer fileComparer(BLOCK_SIZE, emptyHashFunc);
+
     //when
-    auto result = findDuplicateFiles(files);
+    auto result = fileComparer.findDuplicateFiles(files);
 
     //then
     ASSERT_EQ(expected, result);
@@ -73,8 +86,10 @@ TEST(FileComparerTest, findDuplicateFilesDifferentSize) {
     files.push_back(std::make_unique<TestFile>("f1", hashes1));
     files.push_back(std::make_unique<TestFile>("f2", hashes2));
 
+    FileComparer fileComparer(BLOCK_SIZE, emptyHashFunc);
+
     //when
-    auto result = findDuplicateFiles(files);
+    auto result = fileComparer.findDuplicateFiles(files);
 
     //then
     ASSERT_TRUE(result.empty());
@@ -88,8 +103,10 @@ TEST(FileComparerTest, findDuplicateFilesDifferentContent) {
     files.push_back(std::make_unique<TestFile>("f1", hashes1));
     files.push_back(std::make_unique<TestFile>("f2", hashes2));
 
+    FileComparer fileComparer(BLOCK_SIZE, emptyHashFunc);
+
     //when
-    auto result = findDuplicateFiles(files);
+    auto result = fileComparer.findDuplicateFiles(files);
 
     //then
     ASSERT_TRUE(result.empty());
@@ -108,8 +125,10 @@ TEST(FileComparerTest, findDuplicateFilesDifferentBlockInMiddle) {
 
     std::list<std::list<std::string>> expected = { {"f1", "f2"}, {"f3", "f4"} };
 
+    FileComparer fileComparer(BLOCK_SIZE, emptyHashFunc);
+
     //when
-    auto result = findDuplicateFiles(files);
+    auto result = fileComparer.findDuplicateFiles(files);
 
     //then
     ASSERT_EQ(expected, result);
@@ -141,8 +160,10 @@ TEST(FileComparerTest, findDuplicateFilesComplex) {
 
     std::list<std::list<std::string>> expected = { {"f2", "f3", "f4"}, {"f5", "f6", "f8"}, {"f7", "f9"}, {"f10", "f11"} };
 
+    FileComparer fileComparer(BLOCK_SIZE, emptyHashFunc);
+
     //when
-    auto result = findDuplicateFiles(files);
+    auto result = fileComparer.findDuplicateFiles(files);
 
     //then
     ASSERT_EQ(expected, result);
