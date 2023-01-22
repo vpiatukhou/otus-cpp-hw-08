@@ -21,7 +21,6 @@ const std::string ProgramOptions::HASH_ALGORITHM_MD5 = "md5";
 bool ProgramOptions::parse(int argc, char* argv[], std::ostream& out) {
     using namespace std::string_literals;
     using string = std::string;
-
     namespace po = boost::program_options;
 
     string scanLevelStr, minFileSizeStr, blockSizeStr, hashAlgorithmStr;
@@ -46,12 +45,20 @@ bool ProgramOptions::parse(int argc, char* argv[], std::ostream& out) {
         ("hash-algorithm,H", hashAlgorithmOption, "A hash algorithm. Supported values are: crc32 (default) and md5.\n");
 
     po::variables_map optionValues;
-    po::store(po::parse_command_line(argc, argv, optionsDescription), optionValues);
+
+    try {
+        po::store(po::parse_command_line(argc, argv, optionsDescription), optionValues);
+    } catch (po::error& e) {
+        throw std::invalid_argument("Error parsing command line: "s + e.what());
+    }
+
     po::notify(optionValues);
 
     if (optionValues.count(HELP_PARAM)) {
         out << optionsDescription << std::endl;
+        return false;
     }
+
     try {
         scanLevel = stringToSize(scanLevelStr);
     } catch (std::invalid_argument& e) {

@@ -14,7 +14,7 @@ auto FILE_BLOCK_COMPARATOR = [](const std::unique_ptr<File>& a, const std::uniqu
     return *a < *b;
 };
 
-FileComparer::FileComparer(FileSize blockSize_, const Hasher& hasher_) : blockSize(blockSize), hasher(hasher_) {
+FileComparer::FileComparer(FileSize blockSize_, const Hasher& hasher_) : blockSize(blockSize_), hasher(hasher_) {
 }
 
 void FileComparer::findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<std::list<std::string>>& target) const {
@@ -27,7 +27,9 @@ void FileComparer::findAndAppendDuplicates(std::list<std::unique_ptr<File>>& fil
         std::list<std::unique_ptr<File>>& source = unprocessedGroups.front();
 
         bool hasNextBlock = true;
-        while (hasNextBlock) {
+
+        while (hasNextBlock && !source.empty()) {
+            hasNextBlock = false;
             for (auto& file : source) {
                 //we use 'hasNextBlock =' instead of 'hasNextBlock &=' because all files have the same size
                 hasNextBlock = file->readNextBlock(blockSize, hasher);

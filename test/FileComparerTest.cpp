@@ -134,6 +134,23 @@ TEST(FileComparerTest, findDuplicateFilesDifferentBlockInMiddle) {
     ASSERT_EQ(expected, result);
 }
 
+TEST(FileComparerTest, findDuplicateFilesFirstBlockDifferent) {
+    //given
+    std::vector<std::uint32_t> hashes1 = { 1, 3 };
+    std::vector<std::uint32_t> hashes2 = { 2, 3 };
+    std::vector<std::unique_ptr<File>> files;
+    files.push_back(std::make_unique<TestFile>("f1", hashes1));
+    files.push_back(std::make_unique<TestFile>("f2", hashes2));
+
+    FileComparer fileComparer(BLOCK_SIZE, emptyHashFunc);
+
+    //when
+    auto result = fileComparer.findDuplicateFiles(files);
+
+    //then
+    ASSERT_TRUE(result.empty());
+}
+
 TEST(FileComparerTest, findDuplicateFilesComplex) {
     //given
     std::vector<std::unique_ptr<File>> files;
