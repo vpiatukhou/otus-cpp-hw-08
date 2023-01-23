@@ -24,9 +24,9 @@ FileComparer::FileComparer(FileSize blockSize_, const Hasher& hasher_) : blockSi
  * @param files - the list of files which will be compared. Must contain at least two files. All files must be of the same size.
  * @param target - the list of filepaths. An each sublist contains paths of the files with the same content.
  */
-void FileComparer::findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<std::list<std::string>>& target) const {
+void FileComparer::findAndAppendDuplicates(GroupOfFiles& files, std::list<GroupOfPaths>& target) const {
     //the list contains groups of files. An each group contains files with the same content
-    std::list<std::list<std::unique_ptr<File>>> processedGroups;
+    std::list<GroupOfFiles> processedGroups;
 
     //read first block of all files
     if (!readNextBlock(files)) {
@@ -38,11 +38,11 @@ void FileComparer::findAndAppendDuplicates(std::list<std::unique_ptr<File>>& fil
 
     //the list contains groups of files which are not totally processed yet.
     //An each group contains files which are considered equal at the moment.
-    std::deque<std::list<std::unique_ptr<File>>> unprocessedGroups;
+    std::deque<GroupOfFiles> unprocessedGroups;
     unprocessedGroups.push_back(std::move(files)); //all files belong to the same group on the first iteration
 
     while (!unprocessedGroups.empty()) {
-        std::list<std::unique_ptr<File>>& currentGroup = unprocessedGroups.front();
+        GroupOfFiles& currentGroup = unprocessedGroups.front();
         if (currentGroup.size() == 1) {
             unprocessedGroups.erase(unprocessedGroups.begin());
             break;
@@ -104,7 +104,7 @@ void FileComparer::findAndAppendDuplicates(std::list<std::unique_ptr<File>>& fil
     filesToPaths(processedGroups, target);
 }
 
-bool FileComparer::readNextBlock(std::list<std::unique_ptr<File>>& files) const {
+bool FileComparer::readNextBlock(GroupOfFiles& files) const {
     bool hasNextBlock = false;
     for (auto& file : files) {
         //we use 'hasNextBlock =' instead of 'hasNextBlock &=' because all files have the same size
@@ -113,9 +113,9 @@ bool FileComparer::readNextBlock(std::list<std::unique_ptr<File>>& files) const 
     return hasNextBlock;
 }
 
-void FileComparer::filesToPaths(const std::list<std::list<std::unique_ptr<File>>>& files, std::list<std::list<std::string>>& target) const {
+void FileComparer::filesToPaths(const std::list<GroupOfFiles>& files, std::list<GroupOfPaths>& target) const {
     for (auto& group : files) {
-        std::list<std::string> filepaths;
+        GroupOfPaths filepaths;
         for (auto& file : group) {
             filepaths.push_back(file->getFilepath());
         }
@@ -123,7 +123,7 @@ void FileComparer::filesToPaths(const std::list<std::list<std::unique_ptr<File>>
     }
 }
 
-std::list<std::list<std::string>> FileComparer::findDuplicateFiles(std::vector<std::unique_ptr<File>>& target) const {
+std::list<FileComparer::GroupOfPaths> FileComparer::findDuplicateFiles(std::vector<std::unique_ptr<File>>& target) const {
     //group files by sizes
     std::multimap<std::size_t, std::unique_ptr<File>> fileBySize;
     for (auto& file : target) {
@@ -141,10 +141,10 @@ std::list<std::list<std::string>> FileComparer::findDuplicateFiles(std::vector<s
     }
 
     //find duplicate files
-    std::list<std::list<std::string>> filepaths;
+    std::list<GroupOfPaths> filepaths;
     for (auto sizeIt = fileBySize.begin(); sizeIt != fileBySize.end(); sizeIt = fileBySize.upper_bound(sizeIt->first)) {
         auto group = fileBySize.equal_range(sizeIt->first);
-        std::list<std::unique_ptr<File>> files;
+        GroupOfFiles files;
         for (auto groupIt = group.first; groupIt != group.second; ++groupIt) {
             files.push_back(std::move(groupIt->second));
         }

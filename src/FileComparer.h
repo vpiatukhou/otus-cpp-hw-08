@@ -11,16 +11,22 @@ namespace Homework {
 
 class FileComparer {
 public:
+    //the group contains paths of the files with the same content
+    using GroupOfPaths = std::list<std::string>;
+
     FileComparer(FileSize blockSize_, const Hasher& hasher_);
 
-    std::list<std::list<std::string>> findDuplicateFiles(std::vector<std::unique_ptr<File>>& target) const;
+    std::list<GroupOfPaths> findDuplicateFiles(std::vector<std::unique_ptr<File>>& target) const;
 private:
+    //the group contains files with the same content
+    using GroupOfFiles = std::list<std::unique_ptr<File>>;
+
     FileSize blockSize;
     Hasher hasher;
 
-    void findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<std::list<std::string>>& target) const;
-    bool readNextBlock(std::list<std::unique_ptr<File>>& files) const;
-    void filesToPaths(const std::list<std::list<std::unique_ptr<File>>>& files, std::list<std::list<std::string>>& target) const;
+    void findAndAppendDuplicates(GroupOfFiles& files, std::list<GroupOfPaths>& target) const;
+    bool readNextBlock(GroupOfFiles& files) const;
+    void filesToPaths(const std::list<GroupOfFiles>& files, std::list<GroupOfPaths>& target) const;
 };
 
 };

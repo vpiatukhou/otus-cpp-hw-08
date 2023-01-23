@@ -5,19 +5,21 @@
 
 #include <iostream>
 
+using namespace Homework;
+
 const std::string UNEXPECTED_ERROR_MSG = "Unexpected error occurred: ";
 
 const int INVALID_INPUT_ERROR_CODE = -2;
 const int UNEXPECTED_ERROR_CODE = -1;
 
-void sortFilepaths(std::list<std::list<std::string>>& groupedFilepaths) {
+void sortFilepaths(std::list<FileComparer::GroupOfPaths>& groupedFilepaths) {
     for (auto& duplicateFiles : groupedFilepaths) {
         duplicateFiles.sort();
     }
     groupedFilepaths.sort();
 }
 
-void printFilepaths(const std::list<std::list<std::string>>& groupedFilepaths) {
+void printFilepaths(const std::list<FileComparer::GroupOfPaths>& groupedFilepaths) {
     for (auto& duplicateFiles : groupedFilepaths) {
         for (auto& filepath : duplicateFiles) {
             std::cout << filepath << std::endl;
@@ -27,7 +29,6 @@ void printFilepaths(const std::list<std::list<std::string>>& groupedFilepaths) {
 }
 
 int main(int argc, char* argv[]) {
-    using namespace Homework;
     try {
         ProgramOptions programOptions;
         if (programOptions.parse(argc, argv, std::cout)) {
