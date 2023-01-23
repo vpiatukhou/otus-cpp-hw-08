@@ -19,6 +19,8 @@ private:
     Hasher hasher;
 
     void findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<std::list<std::string>>& target) const;
+    bool readNextBlock(std::list<std::unique_ptr<File>>& files) const;
+    void filesToPaths(const std::list<std::list<std::unique_ptr<File>>>& files, std::list<std::list<std::string>>& target) const;
 };
 
 };

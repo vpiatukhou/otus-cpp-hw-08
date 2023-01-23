@@ -25,7 +25,7 @@ bool FileImpl::readNextBlock(FileSize blockSize, const Hasher& hasher) {
     blockHash = hasher(block);
 
     offset += blockSize;
-    return offset < fileSize;
+    return true;
 }
 
 std::string const& FileImpl::getFilepath() const {

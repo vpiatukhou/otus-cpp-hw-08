@@ -4,6 +4,7 @@
 #include <boost/bimap/multiset_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 
+#include <cassert>
 #include <deque>
 #include <map>
 #include <unordered_map>
@@ -17,67 +18,103 @@ auto FILE_BLOCK_COMPARATOR = [](const std::unique_ptr<File>& a, const std::uniqu
 FileComparer::FileComparer(FileSize blockSize_, const Hasher& hasher_) : blockSize(blockSize_), hasher(hasher_) {
 }
 
+/**
+ * Filds files with the same content and adds their paths to the target list.
+ * 
+ * @param files - the list of files which will be compared. Must contain at least two files. All files must be of the same size.
+ * @param target - the list of filepaths. An each sublist contains paths of the files with the same content.
+ */
 void FileComparer::findAndAppendDuplicates(std::list<std::unique_ptr<File>>& files, std::list<std::list<std::string>>& target) const {
-    std::deque<std::list<std::unique_ptr<File>>> unprocessedGroups;
-    unprocessedGroups.push_back(std::move(files));
-
+    //the list contains groups of files. An each group contains files with the same content
     std::list<std::list<std::unique_ptr<File>>> processedGroups;
-    
+
+    //read first block of all files
+    if (!readNextBlock(files)) {
+        //all files are empty, thus all of them are duplicate
+        processedGroups.push_back(std::move(files));
+        filesToPaths(processedGroups, target);
+        return;
+    }
+
+    //the list contains groups of files which are not totally processed yet.
+    //An each group contains files which are considered equal at the moment.
+    std::deque<std::list<std::unique_ptr<File>>> unprocessedGroups;
+    unprocessedGroups.push_back(std::move(files)); //all files belong to the same group on the first iteration
+
     while (!unprocessedGroups.empty()) {
-        std::list<std::unique_ptr<File>>& source = unprocessedGroups.front();
+        std::list<std::unique_ptr<File>>& currentGroup = unprocessedGroups.front();
+        if (currentGroup.size() == 1) {
+            unprocessedGroups.erase(unprocessedGroups.begin());
+            break;
+        }
 
         bool hasNextBlock = true;
 
-        while (hasNextBlock && !source.empty()) {
-            hasNextBlock = false;
-            for (auto& file : source) {
-                //we use 'hasNextBlock =' instead of 'hasNextBlock &=' because all files have the same size
-                hasNextBlock = file->readNextBlock(blockSize, hasher);
-            }
+        //Read files block by block in the loop. Compare hashes of the blocks. 
+        //The files with unique hashes are removed from the list.
+        //Break the loop if no block are left or or all files have been removed from the list.
+        while (hasNextBlock && !currentGroup.empty()) {
+            currentGroup.sort(FILE_BLOCK_COMPARATOR);
 
-            source.sort(FILE_BLOCK_COMPARATOR);
-
-            auto current = source.begin();
-            auto next = source.begin();
+            auto current = currentGroup.begin();
+            auto next = currentGroup.begin();
             ++next; //it is guaranteed that there are at least two elements in the list
 
             std::size_t numberOfDuplicates = 0;
 
-            bool mustRemoveLastElement = false;
-            while (next != source.end()) {
-                mustRemoveLastElement = false;
-
+            bool mustRemoveLastFile = false;
+            
+            //compare the current blocks of all files in the list. Files with unique blocks will be removed from the list
+            while (next != currentGroup.end()) {
+                mustRemoveLastFile = false;
                 if (**current == **next) {
                     ++next;
                     ++current;
                     ++numberOfDuplicates;
                 } else {
-                    if (numberOfDuplicates == 0) {
+                    if (numberOfDuplicates == 0) { //the current file is unique and will be removed from the list
                         ++next;
-                        current = source.erase(current);
-                        mustRemoveLastElement = true;
-                    } else {
-                        unprocessedGroups.emplace_back();
+                        current = currentGroup.erase(current);
+                        mustRemoveLastFile = true;
+                    } else { //the current file is not unique but it differs from the next file
                         //move remaining files to the new group and break the loop
-                        unprocessedGroups.back().splice(unprocessedGroups.back().end(), source, next, source.end());
+                        unprocessedGroups.emplace_back();
+                        unprocessedGroups.back().splice(unprocessedGroups.back().end(), currentGroup, next, currentGroup.end());
                         numberOfDuplicates = 0;
                         break;
                     }
                 }
             }
 
-            if (mustRemoveLastElement) {
-                source.erase(current);
+            //if the last file in the list is unique, remove it
+            if (mustRemoveLastFile) {
+                currentGroup.erase(current);
             }
+
+            //all files in the current group have been compared, so we can read the next block
+            hasNextBlock = readNextBlock(currentGroup);
         }
-        
+
         if (!unprocessedGroups.front().empty()) {
             processedGroups.push_back(std::move(unprocessedGroups.front()));
         }
         unprocessedGroups.erase(unprocessedGroups.begin());
     }
 
-    for (auto& group : processedGroups) {
+    filesToPaths(processedGroups, target);
+}
+
+bool FileComparer::readNextBlock(std::list<std::unique_ptr<File>>& files) const {
+    bool hasNextBlock = false;
+    for (auto& file : files) {
+        //we use 'hasNextBlock =' instead of 'hasNextBlock &=' because all files have the same size
+        hasNextBlock = file->readNextBlock(blockSize, hasher);
+    }
+    return hasNextBlock;
+}
+
+void FileComparer::filesToPaths(const std::list<std::list<std::unique_ptr<File>>>& files, std::list<std::list<std::string>>& target) const {
+    for (auto& group : files) {
         std::list<std::string> filepaths;
         for (auto& file : group) {
             filepaths.push_back(file->getFilepath());
