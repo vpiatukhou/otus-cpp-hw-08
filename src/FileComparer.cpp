@@ -18,6 +18,37 @@ auto FILE_BLOCK_COMPARATOR = [](const std::unique_ptr<File>& a, const std::uniqu
 FileComparer::FileComparer(FileSize blockSize_, const Hasher& hasher_) : blockSize(blockSize_), hasher(hasher_) {
 }
 
+std::list<FileComparer::GroupOfPaths> FileComparer::findDuplicateFiles(std::vector<std::unique_ptr<File>>& target) const {
+    //group files by sizes
+    std::multimap<std::size_t, std::unique_ptr<File>> fileBySize;
+    for (auto& file : target) {
+        fileBySize.emplace(file->getFileSize(), std::move(file)); //ATTENTION: the file is MOVED thus the original container becomes invalid
+    }
+
+    //remove all files with a unique size
+    auto it = fileBySize.begin();
+    while (it != fileBySize.end()) {
+        if (fileBySize.count(it->second->getFileSize()) == 1) {
+            it = fileBySize.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    //find duplicate files
+    std::list<GroupOfPaths> filepaths;
+    for (auto sizeIt = fileBySize.begin(); sizeIt != fileBySize.end(); sizeIt = fileBySize.upper_bound(sizeIt->first)) {
+        auto group = fileBySize.equal_range(sizeIt->first);
+        GroupOfFiles files;
+        for (auto groupIt = group.first; groupIt != group.second; ++groupIt) {
+            files.push_back(std::move(groupIt->second));
+        }
+        findAndAppendDuplicates(files, filepaths);
+    }
+    return filepaths;
+}
+
 /**
  * Filds files with the same content and adds their paths to the target list.
  * 
@@ -121,36 +152,6 @@ void FileComparer::filesToPaths(const std::list<GroupOfFiles>& files, std::list<
         }
         target.push_back(filepaths);
     }
-}
-
-std::list<FileComparer::GroupOfPaths> FileComparer::findDuplicateFiles(std::vector<std::unique_ptr<File>>& target) const {
-    //group files by sizes
-    std::multimap<std::size_t, std::unique_ptr<File>> fileBySize;
-    for (auto& file : target) {
-        fileBySize.emplace(file->getFileSize(), std::move(file)); //ATTENTION: the file is MOVED thus the original container becomes invalid
-    }
-
-    //remove all files with a unique size
-    auto it = fileBySize.begin();
-    while (it != fileBySize.end()) {
-        if (fileBySize.count(it->second->getFileSize()) == 1) {
-            it = fileBySize.erase(it);
-        } else {
-            ++it;
-        }
-    }
-
-    //find duplicate files
-    std::list<GroupOfPaths> filepaths;
-    for (auto sizeIt = fileBySize.begin(); sizeIt != fileBySize.end(); sizeIt = fileBySize.upper_bound(sizeIt->first)) {
-        auto group = fileBySize.equal_range(sizeIt->first);
-        GroupOfFiles files;
-        for (auto groupIt = group.first; groupIt != group.second; ++groupIt) {
-            files.push_back(std::move(groupIt->second));
-        }
-        findAndAppendDuplicates(files, filepaths);
-    }
-    return filepaths;
 }
 
 };
