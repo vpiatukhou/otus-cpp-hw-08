@@ -3,7 +3,7 @@
 #include "File.h"
 #include "HashAlgorithmType.h"
 
-#include "ostream"
+#include <ostream>
 
 namespace Homework {
 
