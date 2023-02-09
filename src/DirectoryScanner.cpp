@@ -1,5 +1,5 @@
-#include "FileImpl.h"
 #include "DirectoryScanner.h"
+#include "FileImpl.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 

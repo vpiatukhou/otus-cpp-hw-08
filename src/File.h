@@ -9,16 +9,19 @@ namespace Homework {
 
 using FileSize = std::uintmax_t; //this type is returned by boost::filesystem::file_size()
 
+/**
+ * Provides access to a file on the disk.
+ */
 class File {
 public:
     virtual ~File() {
     }
 
     /**
-     * Reads a next block.
+     * Reads a next block of data.
      * 
-     * @param blockSize - a size of the block
-     * @param hasher    - generates a hash of the block
+     * @param blockSize - a size of the block in bytes
+     * @param hasher    - a function object which generates a hash of the block
      * @return TRUE if the block has been read. FALSE if there is nothing to read.
      */
     virtual bool readNextBlock(FileSize blockSize, const Hasher& hasher) = 0;

@@ -3,10 +3,11 @@
 #include "HashAlgorithmType.h"
 #include "Hasher.h"
 
-#include <string>
-
 namespace Homework {
 
+/**
+ * Creates a hasher which implements the given algorithm.
+ */
 Hasher createHasher(HashAlgorithmType algorithm);
 
 };

@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     try {
         ProgramOptions programOptions;
         if (programOptions.parse(argc, argv, std::cout)) {
-            auto hasher = createHasher(programOptions.getHashAlgorithm());
+            auto hasher = createHasher(programOptions.getHashAlgorithm()); //the method may throw exceptions, so we call it first
 
             DirectoryScanner scanner;
             scanner.setDirectoriesToScan(programOptions.getDirectoriesToScan());
