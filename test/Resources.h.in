@@ -1,3 +1,0 @@
-#pragma once
-
-#cmakedefine BINARY_DIR "@BINARY_DIR@"
